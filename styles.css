@@ -1,0 +1,183 @@
+.notecloud-status {
+  align-items: center;
+  cursor: pointer;
+  display: inline-flex;
+  gap: 5px;
+}
+
+.notecloud-status-icon,
+.notecloud-status-icon svg {
+  height: 14px;
+  width: 14px;
+}
+
+.notecloud-status.is-error,
+.notecloud-floating-sync.is-error {
+  color: var(--text-error);
+}
+
+.notecloud-status.is-syncing svg,
+.notecloud-floating-sync.is-syncing svg {
+  animation: notecloud-spin 1.1s linear infinite;
+}
+
+.notecloud-floating-sync {
+  align-items: center;
+  background: var(--interactive-accent);
+  border: 1px solid color-mix(in srgb, var(--interactive-accent) 75%, white);
+  border-radius: 999px;
+  bottom: calc(22px + env(safe-area-inset-bottom));
+  box-shadow: 0 4px 16px rgb(0 0 0 / 24%);
+  color: var(--text-on-accent);
+  cursor: pointer;
+  display: flex;
+  height: 42px;
+  justify-content: center;
+  position: fixed;
+  right: 18px;
+  transition: transform 120ms ease, background-color 120ms ease;
+  width: 42px;
+  z-index: var(--layer-popover);
+}
+
+.notecloud-floating-sync:hover {
+  transform: translateY(-1px);
+}
+
+.notecloud-floating-sync:active {
+  transform: scale(.96);
+}
+
+.notecloud-floating-sync.is-error {
+  background: var(--background-modifier-error);
+}
+
+.notecloud-floating-sync.is-success {
+  background: var(--color-green);
+}
+
+.notecloud-floating-sync svg {
+  height: 21px;
+  width: 21px;
+}
+
+.notecloud-settings-heading {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: var(--background-primary);
+  padding: 4px 0 10px;
+}
+
+.notecloud-settings-heading h2 {
+  margin: 0;
+}
+
+.notecloud-save-settings {
+  align-items: center;
+  border-radius: 999px;
+  display: flex;
+  height: 38px;
+  justify-content: center;
+  width: 38px;
+}
+
+.notecloud-save-settings.is-dirty {
+  background: var(--interactive-accent);
+  color: var(--text-on-accent);
+}
+
+.notecloud-quota {
+  border: 1px solid var(--background-modifier-border);
+  border-radius: var(--radius-m);
+  margin: 12px 0 18px;
+  padding: 12px;
+}
+
+.notecloud-quota-header {
+  display: flex;
+  font-size: var(--font-ui-small);
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.notecloud-quota-track {
+  background: var(--background-modifier-border);
+  border-radius: 999px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.notecloud-quota-fill {
+  background: var(--interactive-accent);
+  border-radius: inherit;
+  height: 100%;
+  min-width: 2px;
+}
+
+.notecloud-settings-tip {
+  color: var(--text-muted);
+  font-size: var(--font-ui-smaller);
+  line-height: 1.5;
+  margin-top: 24px;
+}
+
+@keyframes notecloud-spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 600px) {
+  .notecloud-floating-sync {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    height: 46px;
+    right: 14px;
+    width: 46px;
+  }
+}
+.notecloud-modern-settings .notecloud-quota-top{border:1px solid var(--background-modifier-border);border-radius:12px;padding:14px;background:var(--background-secondary)}
+.notecloud-modern-settings .notecloud-account-actions .setting-item-info{display:none}
+.notecloud-modern-settings .notecloud-account-actions .setting-item-control{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;width:100%}
+.notecloud-modern-settings .notecloud-account-actions button{font-size:12px;padding:6px 4px;white-space:nowrap}
+.notecloud-modern-settings .notecloud-web-link{display:block;margin:28px 0 8px;color:var(--text-muted);text-align:center;text-decoration:none}
+.notecloud-modern-settings .notecloud-web-link:hover{color:var(--text-accent)}
+@media(max-width:600px){.notecloud-modern-settings .notecloud-account-actions button{font-size:11px;padding:6px 2px}.notecloud-modern-settings .setting-item{align-items:flex-start}.notecloud-modern-settings .setting-item-control{flex-wrap:wrap}}.notecloud-quota-top .notecloud-quota-track{background:var(--background-modifier-border);border-radius:999px;height:7px;margin-top:9px;overflow:hidden;width:min(360px,100%)}
+.notecloud-quota-top .notecloud-quota-fill{background:var(--interactive-accent);border-radius:inherit;height:100%;min-width:0;transition:width .2s ease}
+.notecloud-uniform-input .setting-item-control{position:relative;width:240px;max-width:100%}
+.notecloud-uniform-input input{box-sizing:border-box;height:34px;width:240px;max-width:100%}
+.notecloud-password-setting input{padding-right:36px}
+.notecloud-password-setting .extra-setting-button{position:absolute;right:5px;top:50%;transform:translateY(-50%);z-index:2}
+.notecloud-interval-input .setting-item-control{align-items:center;display:flex;gap:7px}
+.notecloud-interval-input .setting-item-control:after{color:var(--text-muted);content:"分钟";font-size:12px}
+.notecloud-interval-input input{height:34px;width:90px}
+.notecloud-announcement-button{position:fixed;right:calc(24px + env(safe-area-inset-right,0px));bottom:calc(82px + env(safe-area-inset-bottom,0px));z-index:50;width:42px;height:42px;border-radius:50%;border:1px solid var(--background-modifier-border);background:var(--background-primary);color:var(--text-accent);box-shadow:0 3px 14px #0002;display:flex;align-items:center;justify-content:center}
+.notecloud-announcement-button[hidden]{display:none}
+.notecloud-announcement-button.has-unread{color:var(--text-error,#b91c1c);border-color:var(--color-red,#b91c1c)}
+.notecloud-announcement-button.is-animated{animation:notecloud-announcement-pulse 3s ease-in-out infinite}
+.notecloud-announcement-button:focus-visible{outline:2px solid var(--interactive-accent);outline-offset:3px}
+.notecloud-announcement-count{position:absolute;right:-4px;top:-5px;min-width:18px;padding:1px 4px;border-radius:12px;background:#b91c1c;color:#fff;font-size:11px;line-height:17px}
+.notecloud-unread-announcements{margin:16px 0;padding:8px 16px;border:1px solid var(--color-red,#b91c1c);border-radius:12px}
+.notecloud-unread-announcements h3,.notecloud-announcement-unread .setting-item-name{color:var(--text-error,#b91c1c)}
+.notecloud-unread-announcements .setting-item-description{white-space:pre-wrap}
+@keyframes notecloud-announcement-pulse{0%,100%{opacity:1}50%{opacity:.55}}
+.notecloud-announcements-list,.notecloud-announcement-reader{width:min(900px,calc(100vw - 32px));max-height:85vh}
+.notecloud-announcements-list .setting-item{padding:18px 0;gap:14px}
+.notecloud-announcement-read .setting-item-name,.notecloud-announcement-read .setting-item-description,.notecloud-announcement-meta{color:var(--text-muted)}
+.notecloud-announcement-markdown{font-size:16px;line-height:1.85;overflow-wrap:anywhere;padding:12px 0 24px;user-select:text}
+.notecloud-announcement-markdown h1,.notecloud-announcement-markdown h2,.notecloud-announcement-markdown h3{line-height:1.4;margin:1.4em 0 .6em}
+.notecloud-announcement-markdown pre{padding:16px;overflow:auto;border-radius:10px;background:var(--background-secondary)}
+.notecloud-announcement-markdown blockquote{margin:18px 0;padding:8px 18px;border-left:3px solid var(--interactive-accent);background:var(--background-secondary)}
+.notecloud-announcement-markdown table{display:block;max-width:100%;overflow:auto;border-collapse:collapse}
+.notecloud-announcement-markdown td,.notecloud-announcement-markdown th{border:1px solid var(--background-modifier-border);padding:8px 12px}
+@media(max-width:600px){.notecloud-announcements-list .setting-item{flex-direction:column;align-items:stretch}.notecloud-announcements-list .setting-item-control{justify-content:flex-end}.notecloud-announcement-markdown{font-size:15px}}
+@media(prefers-reduced-motion:reduce){.notecloud-announcement-button.is-animated{animation:none}}
+@media(max-width:600px){.notecloud-uniform-input .setting-item-control,.notecloud-uniform-input input{width:100%}.notecloud-password-setting .setting-item-control{width:100%}}
+/* Independent subscription notice; never shares announcement read state. */
+.notecloud-sync-action{color:#fff}
+.notecloud-sync-action.notecloud-sync-ready{background-color:#16815a}
+.notecloud-sync-action.notecloud-sync-pending{background-color:#be3e4e}
+.notecloud-renewal-button{position:fixed;right:22px;bottom:158px;z-index:999;display:flex;align-items:center;gap:6px;border:1px solid #c45c11;border-radius:24px;background:#fff0d9;color:#873700;padding:10px 14px;box-shadow:0 4px 18px #0002;font-weight:700;cursor:pointer}
+.notecloud-renewal-button[hidden],.notecloud-renewal-card[hidden]{display:none!important}.notecloud-renewal-button svg{width:20px;height:20px}.notecloud-renewal-button.is-critical{background:#b42318;color:white;border-color:#b42318}.notecloud-renewal-button.is-animated{animation:notecloud-renewal-pulse 3s ease-in-out infinite}.notecloud-renewal-card{border:1px solid #d87022;border-left:5px solid #d87022;border-radius:10px;padding:14px;margin:0 0 18px;background:var(--background-secondary)}
+@keyframes notecloud-renewal-pulse{50%{box-shadow:0 0 0 5px #d8702230}}@media(prefers-reduced-motion:reduce){.notecloud-renewal-button.is-animated{animation:none}}
