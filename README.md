@@ -84,6 +84,8 @@ npm test
 
 ## 维护与下载地址
 
+原作者及项目贡献者：[lby7469](https://github.com/lby7469)。当前新仓库维护者：[Yinds0270](https://github.com/Yinds0270)。
+
 原地址 `lby7469/obsidianplug` 继续保留，用于现有用户的 BRAT / Release 下载；不要求旧用户改仓库或重新安装。维护者已授权 `Yinds0270` 在 `Yinds0270/NoteCloud` 继续维护和发布，详见 [维护授权说明](MAINTAINERS.md)。两个来源使用同一插件 ID `notecloud-sync`，不是两个不同插件，不要在同一仓库重复安装。新账号仓库发布与官方目录审核是独立步骤，以各自页面实际状态为准。
 
 ## 许可证与第三方组件
