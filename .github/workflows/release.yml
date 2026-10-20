@@ -1,0 +1,189 @@
+name: Build and attest draft release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Existing stable version tag at the current main commit (for example 0.4.7)
+        required: true
+        type: string
+
+# Only a maintainer can dispatch this workflow. It never runs on pull requests,
+# and never publishes a draft or changes an existing public release.
+permissions:
+  contents: read
+
+concurrency:
+  group: notecloud-release-${{ inputs.tag }}
+  cancel-in-progress: false
+
+jobs:
+  build-and-attest:
+    if: github.repository == 'Yinds0270/NoteCloud' && github.ref == 'refs/heads/main' && github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    defaults:
+      run:
+        shell: bash
+    env:
+      RELEASE_TAG: ${{ inputs.tag }}
+      GH_REPO: ${{ github.repository }}
+
+    steps:
+      - name: Check out the exact trusted workflow commit
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Validate immutable source tag
+        id: source
+        run: |
+          set -euo pipefail
+          if [[ ! "$RELEASE_TAG" =~ ^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$ ]]; then
+            echo 'Only a stable x.y.z version tag is accepted.' >&2
+            exit 1
+          fi
+          tag_commit="$(git rev-parse --verify "refs/tags/${RELEASE_TAG}^{commit}")"
+          if [[ "$tag_commit" != "$GITHUB_SHA" ]]; then
+            echo 'The tag must resolve to the exact main commit selected for this workflow.' >&2
+            exit 1
+          fi
+          if [[ "$(git rev-parse HEAD)" != "$tag_commit" ]]; then
+            echo 'Checked-out commit does not match the requested release tag.' >&2
+            exit 1
+          fi
+          printf 'sha=%s\n' "$tag_commit" >> "$GITHUB_OUTPUT"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Check manifest and package version
+        run: |
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          for (const file of ['manifest.json', 'package.json', 'package-lock.json']) {
+            assert.equal(JSON.parse(fs.readFileSync(file, 'utf8')).version, process.env.RELEASE_TAG, file);
+          }
+          NODE
+
+      - name: Install only lockfile dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts
+
+      - name: Typecheck and lint
+        run: |
+          npm audit --omit=dev --audit-level=low
+          npm run check
+          npm run lint
+
+      - name: Rebuild main.js from source, not from uploaded local binaries
+        run: |
+          rm -- main.js
+          npm run build
+
+      - name: Run regression and distribution checks
+        run: |
+          npm test
+          npm run test:release
+          git diff --exit-code -- main.js manifest.json styles.css
+          sha256sum main.js manifest.json styles.css
+
+      - name: Refuse to replace an existing release or populated draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # A failed API lookup is an error, not evidence that a release is absent.
+          gh api --paginate --slurp "repos/$GH_REPO/releases?per_page=100" > "$RUNNER_TEMP/notecloud-release.json"
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const releases = JSON.parse(fs.readFileSync(`${process.env.RUNNER_TEMP}/notecloud-release.json`, 'utf8')).flat();
+          const release = releases.find(item => item.tag_name === process.env.RELEASE_TAG);
+          if (release) {
+            assert.equal(release.draft, true, 'Existing public releases are immutable');
+            assert.equal(release.assets.length, 0, 'Inspect an existing populated draft manually; no assets are overwritten');
+          }
+          NODE
+
+      - name: Attest all three actual build outputs
+        id: provenance
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4.2.2
+        with:
+          subject-path: |
+            main.js
+            manifest.json
+            styles.css
+          create-storage-record: false
+
+      - name: Verify provenance before creating draft assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+        run: |
+          set -euo pipefail
+          for artifact in main.js manifest.json styles.css; do
+            gh attestation verify "$artifact" \
+              --repo "$GH_REPO" \
+              --signer-workflow "$GH_REPO/.github/workflows/release.yml" \
+              --source-digest "$SOURCE_SHA" \
+              --source-ref refs/heads/main \
+              --deny-self-hosted-runners
+          done
+
+      - name: Create or complete an empty draft, without publishing
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SOURCE_SHA: ${{ steps.source.outputs.sha }}
+          ATTESTATION_URL: ${{ steps.provenance.outputs.attestation-url }}
+        run: |
+          set -euo pipefail
+          gh api --paginate --slurp "repos/$GH_REPO/releases?per_page=100" > "$RUNNER_TEMP/notecloud-before-create.json"
+          release_state="$(node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const releases = JSON.parse(fs.readFileSync(`${process.env.RUNNER_TEMP}/notecloud-before-create.json`, 'utf8')).flat();
+          const release = releases.find(item => item.tag_name === process.env.RELEASE_TAG);
+          if (release) {
+            assert.equal(release.draft, true, 'Never change a public release');
+            assert.equal(release.assets.length, 0, 'Inspect a populated draft manually');
+          }
+          console.log(release ? 'empty-draft' : 'absent');
+          NODE
+          )"
+          if [[ "$release_state" == 'absent' ]]; then
+            gh release create "$RELEASE_TAG" \
+              --verify-tag \
+              --draft \
+              --title "NoteCloud Sync $RELEASE_TAG" \
+              --notes "Built and tested by GitHub Actions from commit $SOURCE_SHA. Provenance: $ATTESTATION_URL. Draft pending maintainer download and verification."
+          fi
+          # Recheck after attestation as another maintainer may have changed the draft.
+          gh release view "$RELEASE_TAG" --json isDraft,assets > "$RUNNER_TEMP/notecloud-upload-guard.json"
+          node --input-type=module <<'NODE'
+          import assert from 'node:assert/strict';
+          import fs from 'node:fs';
+          const release = JSON.parse(fs.readFileSync(`${process.env.RUNNER_TEMP}/notecloud-upload-guard.json`, 'utf8'));
+          assert.equal(release.isDraft, true, 'Never upload assets to an existing public release');
+          assert.equal(release.assets.length, 0, 'Never replace or complete a populated draft automatically');
+          NODE
+          # No --clobber: an existing asset is never overwritten by this job.
+          gh release upload "$RELEASE_TAG" main.js manifest.json styles.css
+          {
+            printf '## Draft ready for maintainer verification\n\n'
+            printf 'Version: `%s`\n\nSource: `%s`\n\n' "$RELEASE_TAG" "$SOURCE_SHA"
+            printf 'Attestation: %s\n\n' "$ATTESTATION_URL"
+            printf 'The draft has not been published. Verify all three downloads before publishing.\n\n'
+            printf '```text\n'
+            sha256sum main.js manifest.json styles.css
+            printf '```\n'
+          } >> "$GITHUB_STEP_SUMMARY"
